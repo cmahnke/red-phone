@@ -13,3 +13,12 @@ https://tooz.us/north-pole-hotline.html
 ## References
 * https://www.ooma.com/blog/45-famous-phones-from-pop-culture/
 * https://en.wikipedia.org/wiki/Fictitious_telephone_number
+
+## Emulators
+
+* https://docs.wokwi.com/vscode/getting-started
+* https://simulide.com/p/
+* https://xevro.be/products/arduino-simulator-macos-free.html
+
+## Anleitung
+https://www.nostalgietelefon.de/01lx/01LX.pdf
