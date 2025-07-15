@@ -2,6 +2,7 @@ import os
 import json
 import argparse
 import re
+import collections
 
 def process_files(input_source):
     file_list = []
@@ -35,7 +36,7 @@ def process_files(input_source):
         print("Error: Invalid input type. Must be a list, a JSON file path, or a directory path.")
         return {}
 
-    pattern = re.compile(r"P_(\d+)-(\d+)_(\d{4}-\d{2}-\d{2}[a-z]?)_([^_]+)_v(\d{4}-\d{2}-\d{2}[a-z]?)\.(mp3|MP3)$")
+    pattern = re.compile(r"P_(\d+)-(\d+)_((\d{4}-\d{2}-\d{2}[a-z]?)|EXT)_(.+)_v(\d{4}-\d{2}-\d{2}[a-z]?)\.(mp3|MP3)$")
     # Regex pattern to capture the components:
     # 1. P_
     # 2. (XX-Y) - The number part we need to transform
@@ -54,8 +55,8 @@ def process_files(input_source):
         if match:
             first_num_part = match.group(1)
             second_num_part = match.group(2)
-            title_part = match.group(4)
-            extension = match.group(6)
+            title_part = match.group(5)
+            extension = match.group(7)
 
             combined_num = first_num_part + second_num_part
             transformed_prefix = f"{int(combined_num):04d}"
@@ -64,9 +65,9 @@ def process_files(input_source):
             processed_files[base_filename] = new_filename
         else:
             print(f"Warning: Filename '{base_filename}' does not match the expected pattern. Skipping transformation.")
-            processed_files[base_filename] = base_filename
+            #processed_files[base_filename] = base_filename
 
-    return processed_files
+    return collections.OrderedDict(sorted(processed_files.items()))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
