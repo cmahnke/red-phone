@@ -3,6 +3,10 @@ import json
 import argparse
 import re
 import collections
+import logging
+import shutil
+
+mp3_dir = "mp3"
 
 def process_files(input_source):
     file_list = []
@@ -18,22 +22,22 @@ def process_files(input_source):
                     if isinstance(data, list):
                         file_list = data
                     else:
-                        print(f"Warning: JSON file '{input_source}' does not contain a list.")
+                        logger.warning(f"JSON file '{input_source}' does not contain a list.")
             except json.JSONDecodeError:
-                print(f"Error: Invalid JSON format in '{input_source}'.")
+                logger.error(f"Invalid JSON format in '{input_source}'.")
             except FileNotFoundError:
-                print(f"Error: JSON file '{input_source}' not found.")
+                logger.error(f"JSON file '{input_source}' not found.")
         elif os.path.isdir(input_source):
             try:
                 for filename in os.listdir(input_source):
                     if os.path.isfile(os.path.join(input_source, filename)):
                         file_list.append(filename)
             except OSError as e:
-                print(f"Error accessing directory '{input_source}': {e}")
+                logger.error(f"Error accessing directory '{input_source}': {e}")
         else:
-            print(f"Error: Invalid input string. Must be a path to a JSON file or a directory: '{input_source}'")
+            logger.error(f"Invalid input string. Must be a path to a JSON file or a directory: '{input_source}'")
     else:
-        print("Error: Invalid input type. Must be a list, a JSON file path, or a directory path.")
+        logger.error("Invalid input type. Must be a list, a JSON file path, or a directory path.")
         return {}
 
     pattern = re.compile(r"P_(\d+)-(\d+)_((\d{4}-\d{2}-\d{2}[a-z]?)|EXT)_(.+)_v(\d{4}-\d{2}-\d{2}[a-z]?)\.(mp3|MP3)$")
@@ -64,12 +68,14 @@ def process_files(input_source):
             new_filename = f"{transformed_prefix}_{title_part}.{extension}"
             processed_files[base_filename] = new_filename
         else:
-            print(f"Warning: Filename '{base_filename}' does not match the expected pattern. Skipping transformation.")
+            logger.warning(f"Filename '{base_filename}' does not match the expected pattern. Skipping transformation.")
             #processed_files[base_filename] = base_filename
 
     return collections.OrderedDict(sorted(processed_files.items()))
 
 if __name__ == "__main__":
+    logger = logging.getLogger('Renamer')
+
     parser = argparse.ArgumentParser(
         description="Process audio file names to transform prefixes and remove specific date/version segments."
     )
@@ -88,9 +94,20 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "-o", "--output",
+        help=f"Path to copy files to."
+    )
+
+    parser.add_argument(
         "-p", "--print",
         action="store_true",
         help="Print mapping"
+    )
+
+    parser.add_argument(
+        "-c", "--copy",
+        action="store_true",
+        help="Copy files"
     )
 
     args = parser.parse_args()
@@ -99,22 +116,37 @@ if __name__ == "__main__":
 
     if args.files:
         input_data = args.files
+        input_path = "./"
     elif args.json:
         input_data = args.json
+        input_path = "./"
     elif args.directory:
         input_data = args.directory
+        input_path = args.directory
     else:
         parser.print_help()
         exit(1)
+
+    if args.output:
+        output_path = os.path.join(args.output, mp3_dir)
+        os.makedirs(output_path, exist_ok=True)
+    else:
+        output_path = "./"
+
+    if args.copy:
+        copy = True
 
 
     if input_data:
         result = process_files(input_data)       
         if result:
-            if args.print:
-                print("Script to rename files:")
-                for original, modified in result.items():
-                    print(f"mv {original}  {modified}")
+            for original, modified in result.items():
+                target = os.path.join(output_path, modified)
+                if args.print:
+                    print(f"mv {original} {target}")
+                if args.copy and args.output:
+                    shutil.copyfile(os.path.join(input_path, original), target)
+            
         else:
             print("No files processed or found matching the criteria.")
 
