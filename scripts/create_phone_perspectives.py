@@ -86,6 +86,12 @@ if __name__ == "__main__":
         help="Path to a directory to scan for files."
     )
 
+    parser.add_argument(
+        "-p", "--print",
+        action="store_true",
+        help="Print mapping"
+    )
+
     args = parser.parse_args()
 
     input_data = None
@@ -100,11 +106,14 @@ if __name__ == "__main__":
         parser.print_help()
         exit(1)
 
+
     if input_data:
-        result = process_files(input_data)
+        result = process_files(input_data)       
         if result:
-            print("Processed File Names:")
-            for original, modified in result.items():
-                print(f"  Original: {original}\n  Modified: {modified}\n")
+            if args.print:
+                print("Script to rename files:")
+                for original, modified in result.items():
+                    print(f"mv {original}  {modified}")
         else:
             print("No files processed or found matching the criteria.")
+
